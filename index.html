@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Name Picker</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #f5c842;
+        --primary-dark: #e6b800;
+        --text: #1a1a1a;
+        --secondary: #666;
+        --border: #e1e1e1;
+        --bg: #fafafa;
+        --white: #ffffff;
+        --success: #22c55e;
+        --danger: #ef4444;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+        padding: 2rem 1rem;
+      }
+
+      .container {
+        max-width: 480px;
+        margin: 0 auto;
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        padding: 2rem 2rem 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .header p {
+        color: var(--secondary);
+        font-size: 0.875rem;
+      }
+
+      .content {
+        padding: 1.5rem 2rem;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        transition: border-color 0.2s ease;
+      }
+
+      .input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .btn {
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: var(--text);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--primary-dark);
+      }
+
+      .btn-secondary {
+        background: var(--text);
+        color: var(--white);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #333;
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: var(--white);
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: #dc2626;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #f9f9f9;
+        border-radius: 4px;
+      }
+
+      .stat {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: var(--secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .name-list {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+      }
+
+      .name-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.875rem;
+        transition: background-color 0.2s ease;
+      }
+
+      .name-item:last-child {
+        border-bottom: none;
+      }
+
+      .name-item:hover {
+        background: #f9f9f9;
+      }
+
+      .name-item.picked {
+        background: #f0f9ff;
+        color: var(--success);
+      }
+
+      .name-item.picked::after {
+        content: "✓";
+        font-weight: 600;
+      }
+
+      .remove-btn {
+        background: none;
+        border: none;
+        color: var(--secondary);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 2px;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: all 0.2s ease;
+      }
+
+      .name-item:hover .remove-btn {
+        opacity: 1;
+      }
+
+      .remove-btn:hover {
+        background: var(--danger);
+        color: var(--white);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .result {
+        padding: 1.5rem 1rem;
+        text-align: center;
+        background: #f9f9f9;
+        border-radius: 4px;
+        font-weight: 500;
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .result.winner {
+        background: var(--primary);
+        color: var(--text);
+      }
+
+      .result.rolling {
+        background: #f0f0f0;
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        to {
+          opacity: 0.7;
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--secondary);
+        font-size: 0.875rem;
+      }
+
+      .footer {
+        background: var(--text);
+        color: var(--white);
+        padding: 1.5rem 2rem;
+        text-align: center;
+      }
+
+      .developer {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .developer strong {
+        color: var(--primary);
+      }
+
+      .links {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .links a {
+        color: #ccc;
+        text-decoration: none;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 2px;
+        transition: color 0.2s ease;
+      }
+
+      .links a:hover {
+        color: var(--primary);
+      }
+
+      .notification {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.75rem 1rem;
+        background: var(--text);
+        color: var(--white);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+      }
+
+      .notification.show {
+        transform: translateX(0);
+      }
+
+      .notification.success {
+        background: var(--success);
+      }
+
+      .notification.danger {
+        background: var(--danger);
+      }
+
+      /* Scrollbar */
+      .name-list::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .name-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      .name-list::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 1rem 0.5rem;
+        }
+
+        .container {
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .header,
+        .content,
+        .footer {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        .stats {
+          gap: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Name Roulette</h1>
+        <p>Simple random name picker</p>
+      </div>
+
+      <div class="content">
+        <div class="input-group">
+          <input
+            type="text"
+            id="nameInput"
+            class="input"
+            placeholder="Enter name"
+            maxlength="50"
+          />
+          <button onclick="addName()" class="btn btn-primary">Add</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="totalNames">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="remainingNames">0</div>
+            <div class="stat-label">Remaining</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="pickedNames">0</div>
+            <div class="stat-label">Picked</div>
+          </div>
+        </div>
+
+        <div class="name-list" id="nameList">
+          <div class="empty-state">
+            No names added yet.<br />Start by adding your first name.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button onclick="roll()" class="btn btn-primary" id="rollBtn">
+            Roll
+          </button>
+          <button onclick="resetPicked()" class="btn btn-secondary">
+            Reset
+          </button>
+          <button onclick="resetAll()" class="btn btn-danger">Clear</button>
+        </div>
+
+        <div class="result" id="result">Click "Roll" to start</div>
+      </div>
+
+      <div class="footer">
+        <div class="developer">
+          Developed by <strong>Yusma Rahman</strong> - Junior Web Developer
+        </div>
+        <div class="links">
+          <a href="https://www.linkedin.com/in/yusmarahman09/" target="_blank"
+            >LinkedIn</a
+          >
+          <a href="https://github.com/yusma1122" target="_blank">GitHub</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let names = [];
+      let picked = [];
+      let isRolling = false;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        loadData();
+        updateDisplay();
+
+        document
+          .getElementById("nameInput")
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              addName();
+            }
+          });
+      });
+
+      function saveData() {
+        try {
+          localStorage.setItem("names", JSON.stringify(names));
+          localStorage.setItem("picked", JSON.stringify(picked));
+        } catch (e) {
+          // localStorage not available
+        }
+      }
+
+      function loadData() {
+        try {
+          const savedNames = localStorage.getItem("names");
+          const savedPicked = localStorage.getItem("picked");
+
+          if (savedNames) names = JSON.parse(savedNames);
+          if (savedPicked) picked = JSON.parse(savedPicked);
+        } catch (e) {
+          // localStorage not available
+        }
+      }
+
+      function addName() {
+        const input = document.getElementById("nameInput");
+        const name = input.value.trim();
+
+        if (!name) {
+          showNotification("Please enter a name");
+          return;
+        }
+
+        if (names.includes(name)) {
+          showNotification("Name already exists");
+          input.value = "";
+          return;
+        }
+
+        names.push(name);
+        input.value = "";
+        updateDisplay();
+        saveData();
+        showNotification(`"${name}" added`, "success");
+      }
+
+      function removeName(name) {
+        names = names.filter((n) => n !== name);
+        picked = picked.filter((n) => n !== name);
+        updateDisplay();
+        saveData();
+      }
+
+      function updateDisplay() {
+        updateNameList();
+        updateStats();
+        updateRollButton();
+      }
+
+      function updateNameList() {
+        const list = document.getElementById("nameList");
+
+        if (names.length === 0) {
+          list.innerHTML =
+            '<div class="empty-state">No names added yet.<br>Start by adding your first name.</div>';
+          return;
+        }
+
+        list.innerHTML = names
+          .map(
+            (name) => `
+        <div class="name-item ${picked.includes(name) ? "picked" : ""}">
+          <span>${name}</span>
+          <button class="remove-btn" onclick="removeName('${name}')">×</button>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      function updateStats() {
+        document.getElementById("totalNames").textContent = names.length;
+        document.getElementById("remainingNames").textContent =
+          names.length - picked.length;
+        document.getElementById("pickedNames").textContent = picked.length;
+      }
+
+      function updateRollButton() {
+        const rollBtn = document.getElementById("rollBtn");
+        const available = names.filter((n) => !picked.includes(n));
+
+        if (names.length === 0) {
+          rollBtn.textContent = "Add Names First";
+          rollBtn.disabled = true;
+        } else if (available.length === 0) {
+          rollBtn.textContent = "Complete";
+          rollBtn.disabled = true;
+        } else {
+          rollBtn.textContent = "Roll";
+          rollBtn.disabled = false;
+        }
+      }
+
+      async function roll() {
+        if (isRolling) return;
+
+        const available = names.filter((n) => !picked.includes(n));
+
+        if (available.length === 0) {
+          showNotification("All names have been picked");
+          return;
+        }
+
+        if (names.length === 0) {
+          showNotification("Add names first");
+          return;
+        }
+
+        isRolling = true;
+        const resultElement = document.getElementById("result");
+
+        // Rolling animation
+        resultElement.className = "result rolling";
+        resultElement.textContent = "Rolling...";
+
+        // Simulate rolling
+        let count = 0;
+        const interval = setInterval(() => {
+          const randomName =
+            available[Math.floor(Math.random() * available.length)];
+          resultElement.textContent = randomName;
+          count++;
+
+          if (count >= 10) {
+            clearInterval(interval);
+
+            setTimeout(() => {
+              const winner =
+                available[Math.floor(Math.random() * available.length)];
+              picked.push(winner);
+
+              resultElement.className = "result winner";
+              resultElement.textContent = `Selected: ${winner}`;
+
+              updateDisplay();
+              saveData();
+              isRolling = false;
+              showNotification(`"${winner}" selected!`, "success");
+            }, 300);
+          }
+        }, 100);
+      }
+
+      function resetPicked() {
+        if (picked.length === 0) {
+          showNotification("Nothing to reset");
+          return;
+        }
+
+        picked = [];
+        document.getElementById("result").className = "result";
+        document.getElementById("result").textContent = 'Click "Roll" to start';
+        updateDisplay();
+        saveData();
+        showNotification("Selections reset", "success");
+      }
+
+      function resetAll() {
+        if (names.length === 0) {
+          showNotification("Nothing to clear");
+          return;
+        }
+
+        if (confirm("Clear all names? This action cannot be undone.")) {
+          names = [];
+          picked = [];
+          document.getElementById("result").className = "result";
+          document.getElementById("result").textContent =
+            'Click "Roll" to start';
+          updateDisplay();
+          saveData();
+          showNotification("All data cleared");
+        }
+      }
+
+      function showNotification(message, type = "default") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => notification.classList.add("show"), 100);
+
+        setTimeout(() => {
+          notification.classList.remove("show");
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }, 2500);
+      }
+    </script>
+  </body>
+</html>
